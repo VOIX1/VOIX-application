@@ -66,5 +66,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+<key>NSMicrophoneUsageDescription</key>
+<string>Microphone access is required to capture listener speech.</string>
+<key>NSSpeechRecognitionUsageDescription</key>
+<string>Speech recognition is required to transcribe spoken responses into text.</string>
 </dict>
 </plist>
