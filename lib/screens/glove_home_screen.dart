@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/chat_message.dart';
 import '../services/speech_service.dart';
 import '../widgets/chat_bubble.dart';
+import 'login_screen.dart';
 
 class GloveHomeScreen extends StatefulWidget {
   const GloveHomeScreen({super.key});
@@ -72,10 +74,10 @@ class _GloveHomeScreenState extends State<GloveHomeScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF2E7D32),
         foregroundColor: Colors.white,
-        title: const Text('Smart Sign Assist', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        title: const Text('VOIX', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: 1.1)),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 12.0),
+            padding: const EdgeInsets.only(right: 4.0),
             child: Row(
               children: [
                 Icon(
@@ -85,12 +87,27 @@ class _GloveHomeScreenState extends State<GloveHomeScreen> {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  isConnected ? 'Glove Connected' : 'Offline',
+                  isConnected ? 'Connected' : 'Offline',
                   style: const TextStyle(fontSize: 12),
                 ),
               ],
             ),
-          )
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout, size: 20),
+            tooltip: 'Sign Out',
+            onPressed: () async {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.clear();
+
+              // Guard against context usage across async boundary
+              if (!context.mounted) return;
+
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+              );
+            },
+          ),
         ],
       ),
       body: Column(
@@ -164,7 +181,7 @@ class _GloveHomeScreenState extends State<GloveHomeScreen> {
                 ),
                 const SizedBox(height: 10),
                 const Text(
-                  '2. Listener Speech Response:',
+                  '2. Listener Speech Response (Live Mic Transcribe):',
                   style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey),
                 ),
                 const SizedBox(height: 6),

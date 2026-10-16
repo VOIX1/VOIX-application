@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'glove_home_screen.dart';
+import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,20 +18,51 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   bool _isLoading = false;
 
-  void _submitLogin() {
+  void _submitLogin() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
-      // Simulate network authentication delay
-      Future.delayed(const Duration(milliseconds: 800), () {
-        if (mounted) {
-          setState(() => _isLoading = false);
-          // Navigate to main Glove Screen and clear login from backstack
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const GloveHomeScreen()),
-          );
-        }
-      });
+      final prefs = await SharedPreferences.getInstance();
+      final String email = _emailController.text.trim().toLowerCase();
+      final String enteredPassword = _passwordController.text;
+
+      // Check if user email is registered in local database
+      final String? savedPassword = prefs.getString('user_$email');
+
+      if (!mounted) return;
+
+      if (savedPassword == null) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No account found with this email. Please register first.'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+        return;
+      }
+
+      if (savedPassword != enteredPassword) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Incorrect password. Please try again.'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+        return;
+      }
+
+      // Save active login session
+      await prefs.setBool('isLoggedIn', true);
+      await prefs.setString('userEmail', email);
+
+      if (!context.mounted) return;
+      setState(() => _isLoading = false);
+
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const GloveHomeScreen()),
+      );
     }
   }
 
@@ -47,7 +80,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // App Brand Header
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -62,11 +94,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 20),
                   const Text(
-                    'Smart Sign Assist',
+                    'VOIX',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 26,
+                      fontSize: 32,
                       fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
                       color: Colors.black87,
                     ),
                   ),
@@ -77,8 +110,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: TextStyle(fontSize: 13, color: Colors.grey),
                   ),
                   const SizedBox(height: 36),
-
-                  // Email Input Field
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
@@ -105,8 +136,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
                   const SizedBox(height: 18),
-
-                  // Password Input Field
                   TextFormField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
@@ -144,8 +173,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
                   const SizedBox(height: 10),
-
-                  // Forgot Password link
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
@@ -163,8 +190,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // Sign In Button
                   SizedBox(
                     height: 50,
                     child: ElevatedButton(
@@ -195,10 +220,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 24),
-
-                  // Register text prompt
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -208,9 +230,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       GestureDetector(
                         onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Registration screen opening...'),
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const RegisterScreen(),
                             ),
                           );
                         },
